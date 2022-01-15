@@ -2,17 +2,17 @@ const c = document.getElementById("canvas");
 const ctx = c.getContext("2d");
 
 
-let range = (start, end) => {
+const range = (start, end) => {
   return Array.from(Array(end - start + 1), (_, i) => i + start);
 }
 
 
-let imagePath = (animation, frameNumber) => {
+const imagePath = (animation, frameNumber) => {
   return "./assets/images/" + animation + "/" + frameNumber + ".png";
 }
 
 
-let loadImage = (src, callback) => {
+const loadImage = (src, callback) => {
   let img = document.createElement("img");
   img.onload = () => callback(img);
   img.src = src;
@@ -20,7 +20,7 @@ let loadImage = (src, callback) => {
 };
 
 
-let loadImages = (actions, callback) => {
+const loadImages = (actions, callback) => {
 
   let imagesToLoad = 0;
 
@@ -45,24 +45,23 @@ let loadImages = (actions, callback) => {
 };
 
 
-let moveCharacter = (x, y) => {
+const moveCharacter = (x, y) => {
   //ensure that the character is within the canvas
   let pX = game.character.position.x + x;
   if (pX >= 0 && pX <= c.width - game.character.width) {
     game.character.position.x += x;
   }
   return;
-  let pY = game.character.position.y + y;
-  if (pY >= 0 && pY <= c.height - game.character.height) {
-    game.character.position.y += y;
-  }
+  // let pY = game.character.position.y + y;
+  // if (pY >= 0 && pY <= c.height - game.character.height) {
+  //   game.character.position.y += y;
+  // }
 }
 
 let frameTimeouts = [];
 let animationTimeout = null;
 
-let animate = (ctx, actions, animation, callback) => {
-
+const animate = (ctx, actions, animation, callback) => {
   actions[animation].images.forEach((image, index) => {
     const t = setTimeout(() => {
       ctx.clearRect(0, 0, c.width, c.height);
@@ -81,6 +80,16 @@ let animate = (ctx, actions, animation, callback) => {
   animationTimeout = setTimeout(callback, actions[animation].images.length * game.animationSpeed);
 }
 
+const clearPreviousAnimation = () => {
+  frameTimeouts.forEach((timeout) => {
+    clearTimeout(timeout);
+  });
+  frameTimeouts = [];
+  if (animationTimeout) {
+    clearTimeout(animationTimeout);
+  }
+  animationTimeout = null;
+};
 
 const game = {
   animationSpeed: 100,
@@ -162,26 +171,12 @@ loadImages(game.actions, (actions) => {
 
   actionObjKeys.forEach((key) => {
     document.getElementById(actions[key].buttonId)?.addEventListener("click", () => {
-
       clearPreviousAnimation()
-
       moveCharacter(actions[key].moveX ?? 0, 0);
       selectedAnimation = actions[key].name;
-
       aux()
     });
   });
-
-  const clearPreviousAnimation = () => {
-    frameTimeouts.forEach((timeout) => {
-      clearTimeout(timeout);
-    });
-    frameTimeouts = [];
-    if (animationTimeout) {
-      clearTimeout(animationTimeout);
-    }
-    animationTimeout = null;
-  };
 
 
   let kbKeysAction = (ev) => {
@@ -190,7 +185,6 @@ loadImages(game.actions, (actions) => {
       if (ev.key === actions[key].kbKey) {
 
         clearPreviousAnimation();
-
         moveCharacter(actions[key].moveX ?? 0, 0);
         selectedAnimation = actions[key].name;
         aux()
@@ -201,6 +195,5 @@ loadImages(game.actions, (actions) => {
   document.addEventListener("keyup", kbKeysAction);
 
 });
-
 
 console.log("main.js loaded");
