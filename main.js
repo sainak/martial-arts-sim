@@ -179,20 +179,16 @@ loadImages(game.actions, (actions) => {
   });
 
 
-  let kbKeysAction = (ev) => {
+  document.addEventListener("keyup", (ev) => {
     actionObjKeys.forEach((key) => {
-
-      if (ev.key === actions[key].kbKey) {
-
+      if (ev.key.toLowerCase() === actions[key].kbKey) {
         clearPreviousAnimation();
         moveCharacter(actions[key].moveX ?? 0, 0);
         selectedAnimation = actions[key].name;
         aux()
       }
     });
-  }
-
-  document.addEventListener("keyup", kbKeysAction);
+  });
 
 });
 
