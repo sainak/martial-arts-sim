@@ -58,11 +58,13 @@ let moveCharacter = (x, y) => {
   }
 }
 
+let frameTimeouts = [];
+let animationTimeout = null;
 
 let animate = (ctx, actions, animation, callback) => {
 
   actions[animation].images.forEach((image, index) => {
-    setTimeout(() => {
+    const t = setTimeout(() => {
       ctx.clearRect(0, 0, c.width, c.height);
       ctx.drawImage(game.background.image, 0, 0, c.width, c.height);
       ctx.drawImage(
@@ -73,9 +75,10 @@ let animate = (ctx, actions, animation, callback) => {
         game.character.height
       );
     }, index * game.animationSpeed);
+    frameTimeouts.push(t);
   });
 
-  setTimeout(callback, actions[animation].images.length * game.animationSpeed);
+  animationTimeout = setTimeout(callback, actions[animation].images.length * game.animationSpeed);
 }
 
 
@@ -145,17 +148,12 @@ const game = {
 
 loadImages(game.actions, (actions) => {
 
-  let queuedAnimations = [];
+  let selectedAnimation = "idle";
 
   let aux = () => {
-    let selectedAnimation;
 
-    if (queuedAnimations.length === 0) {
-      selectedAnimation = "idle"
-    } else {
-      selectedAnimation = queuedAnimations.shift()
-    }
-    animate(ctx, actions, selectedAnimation, aux);
+    animate(ctx, actions, selectedAnimation || "idle", aux);
+    selectedAnimation = "idle";
   };
 
   aux();
@@ -164,17 +162,38 @@ loadImages(game.actions, (actions) => {
 
   actionObjKeys.forEach((key) => {
     document.getElementById(actions[key].buttonId)?.addEventListener("click", () => {
+
+      clearPreviousAnimation()
+
       moveCharacter(actions[key].moveX ?? 0, 0);
-      queuedAnimations.push(actions[key].name);
+      selectedAnimation = actions[key].name;
+
+      aux()
     });
   });
+
+  const clearPreviousAnimation = () => {
+    frameTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    frameTimeouts = [];
+    if (animationTimeout) {
+      clearTimeout(animationTimeout);
+    }
+    animationTimeout = null;
+  };
 
 
   let kbKeysAction = (ev) => {
     actionObjKeys.forEach((key) => {
+
       if (ev.key === actions[key].kbKey) {
+
+        clearPreviousAnimation();
+
         moveCharacter(actions[key].moveX ?? 0, 0);
-        queuedAnimations.push(actions[key].name);
+        selectedAnimation = actions[key].name;
+        aux()
       }
     });
   }
