@@ -8,10 +8,10 @@ interface Action {
   moveY?: number;
 }
 
-const range = (start: number, end: number = undefined, step: number = 1) => {
+const range = (start: number, end: number | null = null, step: number = 1) => {
   if (end === undefined) [start, end] = [0, start];
   let range = [];
-  for (let i = start; i < end; i += step) {
+  for (let i = start; i < end!; i += step) {
     range.push(i);
   }
   return range;
@@ -21,7 +21,7 @@ const imagePath = (animation: string, frameNumber: number) =>
   `./assets/images/${animation}/${frameNumber}.png`;
 
 const loadImage = async (srcPath: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     let img = document.createElement("img");
     img.onload = () => resolve(img);
     img.src = srcPath;
@@ -36,7 +36,8 @@ const loadGameBg = () => {
 
 const loadImagesForActions = () => {
   for (const actionName in game.actions) {
-    const action: Action = game.actions[actionName];
+    const action: Action =
+      game.actions[actionName as keyof typeof game.actions];
     Promise.all(
       action.frames.map((frame) => loadImage(imagePath(action.name, frame)))
     ).then((images) => {
@@ -62,10 +63,14 @@ const moveCharacter = (
   }
 };
 
-let frameTimeouts = [];
-let animationTimeout = null;
+let frameTimeouts: number[] = [];
+let animationTimeout: number | null = null;
 
-const animate = (ctx: CanvasRenderingContext2D, action: Action, callback) => {
+const animate = (
+  ctx: CanvasRenderingContext2D,
+  action: Action,
+  callback: () => void
+) => {
   action.images.forEach((image, index) => {
     const timeout = setTimeout(() => {
       ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -109,7 +114,7 @@ const game = {
   background: {
     width: 800,
     height: 600,
-    image: null,
+    image: new Image(),
   },
   character: {
     height: 500,
@@ -178,7 +183,11 @@ function main() {
 
   let selectedAnimation = "idle";
   let aux = () => {
-    animate(context, game.actions[selectedAnimation], aux);
+    animate(
+      context!,
+      game.actions[selectedAnimation as keyof typeof game.actions],
+      aux
+    );
     selectedAnimation = "idle";
   };
   aux();
@@ -191,15 +200,15 @@ function main() {
   };
 
   actionObjKeys.forEach((key) => {
-    let action = game.actions[key];
-    document.getElementById(action.buttonId)?.addEventListener("click", () => {
+    let action: Action = game.actions[key as keyof typeof game.actions];
+    document.getElementById(action.buttonId ?? "")?.addEventListener("click", () => {
       performAction(action);
     });
   });
 
   document.addEventListener("keydown", (e) => {
     actionObjKeys.forEach((key) => {
-      let action = game.actions[key];
+      let action: Action = game.actions[key as keyof typeof game.actions];
       if (e.key === action.kbKey) {
         performAction(action);
       }
